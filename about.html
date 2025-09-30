@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About | Movie Bot</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>About Movie Bot</h1>
+    <nav>
+      <a href="home.html">Home</a>
+      <a href="about.html">About</a>
+      <a href="index.html">Logout</a>
+    </nav>
+  </header>
+
+  <div class="container">
+    <h2>What is Movie Bot?</h2>
+    <p>
+      Movie Bot is your personal assistant for finding the perfect movie. 🎬  
+      Whether you like action, romance, comedy, or horror, the bot guides you step by step to pick the best match.  
+      It even considers mood, year, and language to give you personalized suggestions. 🍿
+    </p>
+
+    <h2>Features</h2>
+    <ul>
+      <li>🤖 Chat-based movie recommendations</li>
+      <li>🎥 Multi-genre selection</li>
+      <li>📺 Suggestions by mood, year, and language</li>
+      <li>🔄 Endless recommendations with feedback loop</li>
+    </ul>
+  </div>
+
+  
+  <script>
+  window.watsonAssistantChatOptions = {
+    integrationID: "154f1ff2-1959-4e24-a82b-19c27cd89640", // The ID of this integration.
+    region: "au-syd", // The region your integration is hosted in.
+    serviceInstanceID: "efbaef90-38d4-4001-bb7f-f9620d4aa8cc", // The ID of your service instance.
+    onLoad: async (instance) => { await instance.render(); }
+  };
+  setTimeout(function(){
+    const t=document.createElement('script');
+    t.src="https://web-chat.global.assistant.watson.appdomain.cloud/versions/" + (window.watsonAssistantChatOptions.clientVersion || 'latest') + "/WatsonAssistantChatEntry.js";
+    document.head.appendChild(t);
+  });
+</script>
+</body>
+</html>
