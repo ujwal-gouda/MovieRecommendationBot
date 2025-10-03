@@ -1,10 +1,10 @@
 /* Theme Colors */
 :root {
-  --bg-primary: #1A1A1A;
-  --bg-secondary: #2A2A2A;
-  --text-primary: #E0E0E0;
-  --text-secondary: #A8A8A8;
-  --accent: #0F62FE;
+  --bg-primary: #1a1a1a;
+  --bg-secondary: #2a2a2a;
+  --text-primary: #e0e0e0;
+  --text-secondary: #a8a8a8;
+  --accent: #0f62fe;
   --border-radius: 8px;
 }
 
@@ -12,8 +12,9 @@
 body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
-  font-family: 'IBM Plex Sans', sans-serif;
-  margin: 0; padding: 0;
+  font-family: "IBM Plex Sans", sans-serif;
+  margin: 0;
+  padding: 0;
   line-height: 1.6;
 }
 
@@ -45,7 +46,7 @@ header nav a:hover {
   padding: 30px;
   margin: 100px auto;
   border-radius: var(--border-radius);
-  box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
   text-align: center;
 }
 .login-box input {
@@ -75,7 +76,9 @@ header nav a:hover {
 }
 
 /* Headings */
-h1, h2, h3 {
+h1,
+h2,
+h3 {
   color: var(--text-primary);
 }
 
@@ -111,7 +114,7 @@ ul li {
   border-radius: var(--border-radius);
   overflow: hidden;
   text-align: center;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
   transition: transform 0.2s;
 }
 .movie-card:hover {
@@ -134,4 +137,127 @@ ul li {
   margin-bottom: 10px;
   color: var(--text-secondary);
   font-size: 14px;
+}
+
+/* Sentiment Analysis Page Styles */
+.analysis-section {
+  margin-top: 20px;
+  padding: 20px;
+  background: #1e1e1e;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.analysis-section textarea {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #444;
+  background: #2a2a2a;
+  color: #fff;
+  resize: none;
+  margin-bottom: 15px;
+  font-size: 1rem;
+  box-sizing: border-box;
+}
+
+.analysis-section textarea:focus {
+  outline: none;
+  border-color: #c59d5f;
+  box-shadow: 0 0 6px rgba(197, 157, 95, 0.6);
+}
+
+.btn-group {
+  margin-bottom: 20px;
+}
+
+.btn-group button {
+  background: #c59d5f;
+  border: none;
+  padding: 10px 16px;
+  margin-right: 10px;
+  border-radius: 6px;
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-group button:hover {
+  transform: translateY(-2px);
+  background: #e0b97d;
+}
+
+#sentiment-result-container {
+  margin-top: 20px;
+  padding: 15px;
+  border-radius: 10px;
+  background: #2a2a2a;
+  color: #eee;
+  text-align: center;
+}
+
+#sentiment-result .emoji {
+  font-size: 3rem;
+  margin-bottom: 10px;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 1rem;
+  background: #111;
+  color: #fff;
+}
+
+header h1 {
+  font-size: 1.3rem;
+}
+
+nav {
+  display: flex;
+  gap: 15px;
+}
+
+nav a {
+  color: #fff;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+nav a:hover {
+  color: #c59d5f;
+}
+
+/* Hamburger button */
+.menu-toggle {
+  display: none;
+  font-size: 1.5rem;
+  background: none;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+}
+
+/* Responsive rules */
+@media (max-width: 768px) {
+  nav {
+    display: none;
+    flex-direction: column;
+    width: 100%;
+    background: #1c1c1c;
+    padding: 10px 0;
+    margin-top: 10px;
+  }
+  nav a {
+    padding: 10px;
+    display: block;
+  }
+  .menu-toggle {
+    display: block;
+  }
+  nav.active {
+    display: flex;
+  }
 }

@@ -8,13 +8,16 @@
 </head>
 <body>
   <header>
-    <h1>About Movie Bot</h1>
-    <nav>
-      <a href="home.html">Home</a>
-      <a href="about.html">About</a>
-      <a href="index.html">Logout</a>
-    </nav>
-  </header>
+  <h1>🎬 Movie Recommendation Bot</h1>
+  <button class="menu-toggle" onclick="toggleMenu()">☰</button>
+  <nav id="navbar">
+    <a href="home.html">Home</a>
+    <a href="about.html">About</a>
+    <a href="textToSpeach.html">Text To Speach</a>
+    <a href="sentimentEnalysis.html">Sentiment Analysis</a>
+    <a href="index.html">Logout</a>
+  </nav>
+</header>
 
   <div class="container">
     <h2>What is Movie Bot?</h2>
@@ -46,6 +49,11 @@
     t.src="https://web-chat.global.assistant.watson.appdomain.cloud/versions/" + (window.watsonAssistantChatOptions.clientVersion || 'latest') + "/WatsonAssistantChatEntry.js";
     document.head.appendChild(t);
   });
+</script>
+<script>
+  function toggleMenu() {
+    document.getElementById("navbar").classList.toggle("active");
+  }
 </script>
 </body>
 </html>

@@ -1,277 +1,415 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Advanced Sentiment Analysis - Food Bot</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<style>
-:root { --gold-color: #c59d5f; --dark-blue: #0a192f; }
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Movie Bot | Sentiment Analysis</title>
+  <!-- keep your main site stylesheet so header/nav stays the same -->
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* Page-specific overrides and analysis styles (dark-theme friendly) */
+    .container { max-width: 1100px; margin: 2.5rem auto; padding: 0 1rem; }
+    h2.section-title { color: #f3f4f6; margin-bottom: .5rem; font-size: 1.6rem; }
+    p.section-desc { color: #cbd5e1; margin-bottom: 1rem; max-width: 880px; }
 
-body {
-    font-family: 'Inter', sans-serif;
-    background-color: #f8f9fa;
-    color: #333;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-}
-.font-playfair { font-family: 'Playfair Display', serif; }
+    .analysis-card {
+      background: #121212;
+      border-radius: 12px;
+      padding: 22px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+      display: grid;
+      grid-template-columns: 1fr 420px;
+      gap: 22px;
+      align-items: start;
+    }
 
-header {
-    background-color: rgba(255,255,255,0.9);
-    backdrop-filter: blur(6px);
-    padding: 1rem;
-    text-align: center;
-    font-size: 1.75rem;
-    font-weight: bold;
-    position: sticky;
-    top: 0;
-    z-index: 50;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-}
+    /* make layout responsive */
+    @media (max-width: 920px) {
+      .analysis-card { grid-template-columns: 1fr; }
+      .result-panel { order: 2; }
+    }
 
-footer {
-    background-color: #1f2937;
-    color: #fff;
-    text-align: center;
-    padding: 2rem 1rem;
-}
+    textarea#feedback-text {
+      width: 100%;
+      min-height: 160px;
+      resize: vertical;
+      padding: 12px 14px;
+      border-radius: 8px;
+      border: 1px solid #2b2b2b;
+      background: #0f1720;
+      color: #e6eef8;
+      font-size: 15px;
+      line-height: 1.4;
+      box-sizing: border-box;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.01);
+    }
+    textarea#feedback-text::placeholder { color: #94a3b8; }
 
-textarea {
-    width: 100%;
-    padding: 1rem;
-    border: 2px solid #e0e0e0;
-    border-radius: 12px;
-    resize: none;
-    font-size: 1rem;
-    transition: border-color 0.3s ease, box-shadow 0.3s ease;
-}
-textarea:focus {
-    outline: none;
-    border-color: var(--gold-color);
-    box-shadow: 0 0 10px rgba(197,157,95,0.4);
-}
+    .actions { margin-top: 12px; display:flex; gap:10px; flex-wrap:wrap; }
+    .btn {
+      padding: 9px 14px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-weight:600;
+      font-size: 14px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    }
+    .btn.primary { background: #c59d5f; color: #0b0b0b; }
+    .btn.ghost { background: #111827; color: #e6eef8; border: 1px solid #273046; }
+    .btn.success { background: #10b981; color:#fff; }
+    .btn:hover { transform: translateY(-2px); }
 
-button {
-    cursor: pointer;
-    border: none;
-    border-radius: 12px;
-    padding: 0.75rem 1.5rem;
-    font-weight: 600;
-    font-size: 1rem;
-    transition: all 0.3s ease;
-}
-#analyze-btn { background-color: var(--gold-color); color: white; }
-#analyze-btn:hover { transform: translateY(-3px) scale(1.03); box-shadow: 0 6px 20px rgba(197,157,95,0.4); }
+    /* result panel */
+    .result-panel {
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border-radius: 10px;
+      padding: 18px;
+      color: #e6eef8;
+      text-align: center;
+      min-height: 320px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
 
-#clear-btn { background-color: #e5e7eb; color: #374151; }
-#clear-btn:hover { background-color: #d1d5db; }
+    .sent-emoji { font-size: 48px; }
+    .sentiment-label { font-size: 20px; font-weight:700; margin: 6px 0; }
+    .sentiment-explain { color: #9aa7bb; margin-bottom: 8px; }
 
-#text_to_speech { background-color: #22c55e; color: white; }
-#text_to_speech:hover { background-color: #16a34a; }
+    .keywords { display:flex; flex-wrap:wrap; gap:6px; justify-content:center; margin-top:8px; }
+    .keyword { padding:6px 10px; border-radius:999px; background:#111827; color:#fff; font-size:13px; border:1px solid rgba(255,255,255,0.03); }
 
-#sentiment-result-container {
-    background-color: #f3f4f6;
-    border-radius: 16px;
-    padding: 2rem;
-    min-height: 380px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
+    /* progress circle wrapper */
+    .progress-wrap { position: relative; width:110px; height:110px; margin: 8px auto; }
+    .progress-text { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-weight:700; color:#f8fafc; font-size:18px; }
 
-#sentiment-result { width: 100%; text-align: center; }
+    /* small helper */
+    .muted { color: #9aa7bb; font-size: 14px; }
 
-.emoji { font-size: 4rem; margin-bottom: 0.5rem; }
-.positive .emoji { animation: bounce 1s infinite; }
-.negative .emoji { animation: shake 0.5s infinite; }
-.neutral .emoji { animation: pulse 1.5s infinite; }
-@keyframes bounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
-@keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }
-@keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+    /* placeholder block */
+    #sentiment-placeholder { color: #94a3b8; }
 
-.keyword-tag { padding: 6px 12px; border-radius: 8px; font-size: 0.875rem; margin: 2px; display: inline-block; }
-.keyword-positive { background-color: #dcfce7; color: #166534; }
-.keyword-negative { background-color: #fee2e2; color: #991b1b; }
+    /* small loader */
+    .loader { width:30px; height:30px; border-radius:50%; border:4px solid rgba(255,255,255,0.06); border-top-color:#c59d5f; animation:spin 1s linear infinite; margin: 10px auto; }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
-.progress-circle { position: relative; width: 120px; height: 120px; margin: 1rem auto; }
-.progress-circle-bg, .progress-circle-fg { fill: none; stroke-width: 10; }
-.progress-circle-bg { stroke: #e6e6e6; }
-.progress-circle-fg {
-    stroke: var(--gold-color);
-    stroke-linecap: round;
-    transform: rotate(-90deg);
-    transform-origin: 50% 50%;
-    transition: stroke-dashoffset 0.8s ease-out, stroke 0.8s ease-out;
-}
-.progress-circle-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 1.5rem; font-weight: bold; color: #333; }
-
-.loader {
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid var(--gold-color);
-    border-radius: 50%;
-    width: 30px;
-    height: 30px;
-    animation: spin 1s linear infinite;
-    margin: 1rem auto;
-}
-@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-</style>
+    /* small responsive fix for textarea + buttons on super small screens */
+    @media (max-width:420px) {
+      .analysis-card { padding: 14px; gap: 12px; }
+      textarea#feedback-text { min-height: 130px; }
+      .result-panel { min-height: 260px; padding: 14px; }
+    }
+  </style>
 </head>
 <body>
-<header>food bot</header>
+  <!-- Header / nav kept same as home.html for consistent UI -->
+  <header>
+  <h1>🎬 Movie Recommendation Bot</h1>
+  <button class="menu-toggle" onclick="toggleMenu()">☰</button>
+  <nav id="navbar">
+    <a href="home.html">Home</a>
+    <a href="about.html">About</a>
+    <a href="textToSpeach.html">Text To Speach</a>
+    <a href="sentimentEnalysis.html">Sentiment Analysis</a>
+    <a href="index.html">Logout</a>
+  </nav>
+</header>
 
-<main class="flex-grow py-12">
-<section class="container mx-auto px-6">
-<div class="text-center mb-12">
-    <h1 class="text-4xl md:text-5xl font-playfair font-bold mb-4">Advanced Feedback Analysis</h1>
-    <p class="max-w-2xl mx-auto text-gray-600">AI detects sentiment, emotions, and keywords from your review in a clear and understandable way.</p>
-</div>
+  <main>
+    <div class="container">
+      <h2 class="section-title">Sentiment Analysis 🎭</h2>
+      <p class="section-desc">Paste your review or feedback below and our AI will analyze its sentiment, emotion and extract keywords. If the remote API is unavailable due to CORS/network, a local fallback analyzer will produce results so the page always works.</p>
 
-<div class="max-w-4xl mx-auto grid md:grid-cols-2 gap-8 items-start bg-white p-8 rounded-xl shadow-2xl">
-<div>
-    <h2 class="text-2xl font-playfair font-bold mb-4">Leave Your Review</h2>
-    <textarea id="feedback-text" rows="8" placeholder="Enter your feedback here..."></textarea>
-    <div class="flex space-x-4 mt-4">
-        <button id="analyze-btn">Analyze Feedback</button>
-        <button id="clear-btn">Clear</button>
-        <button id="text_to_speech">Text to Speech</button>
-    </div>
-</div>
+      <div class="analysis-card" role="region" aria-labelledby="analysis-heading">
+        <!-- Left: input -->
+        <div class="input-panel">
+          <label id="analysis-heading" class="muted" style="display:block; margin-bottom:8px; font-weight:700; color:#e6eef8;">Leave Your Review</label>
+          <textarea id="feedback-text" placeholder="Enter your feedback here..."></textarea>
 
-<div id="sentiment-result-container">
-    <div id="sentiment-result-placeholder" class="text-gray-500 pt-16">
-        <p>Your analysis will appear here.</p>
-    </div>
-    <div id="sentiment-result" class="hidden">
-        <div class="emoji" id="sentiment-emoji">😐</div>
-        <h3 class="text-xl font-bold mb-2" id="sentiment-label">Neutral</h3>
-        <p id="sentiment-explanation" class="text-gray-700 mb-4">This indicates a neutral sentiment in your feedback.</p>
-        <div class="progress-circle">
-            <svg viewBox="0 0 100 100">
-                <circle class="progress-circle-bg" cx="50" cy="50" r="45"></circle>
-                <circle class="progress-circle-fg" id="progress-bar" cx="50" cy="50" r="45"></circle>
-            </svg>
-            <div class="progress-circle-text" id="average-score-text">0.00</div>
+          <div class="actions">
+            <button id="analyze-btn" class="btn primary">Analyze Feedback</button>
+            <button id="clear-btn" class="btn ghost">Clear</button>
+            <button id="text_to_speech" class="btn success">Text to Speech</button>
+          </div>
+
+          <div style="margin-top:10px;">
+            <div id="status-msg" class="muted">Your analysis will appear on the right.</div>
+          </div>
         </div>
-        <div id="detected-emotion" class="mt-4 mb-2 text-lg"></div>
-        <div id="detected-keywords" class="flex flex-wrap justify-center mt-2"></div>
+
+        <!-- Right: results -->
+        <div class="result-panel" id="sentiment-result-container">
+          <div id="sentiment-placeholder">
+            <div class="muted">Your analysis will appear here.</div>
+          </div>
+
+          <div id="sentiment-result" style="display:none;">
+            <div class="sent-emoji" id="sentiment-emoji">😐</div>
+            <div class="sentiment-label" id="sentiment-label">Neutral</div>
+            <div class="sentiment-explain" id="sentiment-explanation">This indicates a neutral sentiment in your feedback.</div>
+
+            <div class="progress-wrap" aria-hidden="true">
+              <svg viewBox="0 0 100 100" width="110" height="110" aria-hidden="true">
+                <circle cx="50" cy="50" r="44" stroke="#0b1220" stroke-width="12" fill="none"></circle>
+                <circle id="progress-bar" cx="50" cy="50" r="44" stroke="#c59d5f" stroke-width="12" stroke-linecap="round" fill="none" transform="rotate(-90 50 50)"></circle>
+              </svg>
+              <div class="progress-text" id="average-score-text">0.00</div>
+            </div>
+
+            <div id="detected-emotion" class="muted" style="min-height:22px;"></div>
+            <div id="detected-keywords" class="keywords" aria-live="polite"></div>
+          </div>
+        </div>
+      </div>
     </div>
-</div>
-</div>
-</section>
-</main>
+  </main>
 
+  <!-- IBM Watson Chat integration (same as your home page) -->
+  <script>
+  window.watsonAssistantChatOptions = {
+    integrationID: "154f1ff2-1959-4e24-a82b-19c27cd89640",
+    region: "au-syd",
+    serviceInstanceID: "efbaef90-38d4-4001-bb7f-f9620d4aa8cc",
+    onLoad: async (instance) => { await instance.render(); }
+  };
+  setTimeout(function(){
+    const t=document.createElement('script');
+    t.src="https://web-chat.global.assistant.watson.appdomain.cloud/versions/" + (window.watsonAssistantChatOptions.clientVersion || 'latest') + "/WatsonAssistantChatEntry.js";
+    document.head.appendChild(t);
+  }, 500);
+  </script>
 
-<script>
-const analyzeBtn = document.getElementById('analyze-btn');
-const clearBtn = document.getElementById('clear-btn');
-const nextPageBtn = document.getElementById('text_to_speech');
-const feedbackText = document.getElementById('feedback-text');
-const sentimentResult = document.getElementById('sentiment-result');
-const sentimentPlaceholder = document.getElementById('sentiment-result-placeholder');
-const sentimentEmoji = document.getElementById('sentiment-emoji');
-const sentimentLabel = document.getElementById('sentiment-label');
-const sentimentExplanation = document.getElementById('sentiment-explanation');
-const detectedEmotion = document.getElementById('detected-emotion');
-const detectedKeywords = document.getElementById('detected-keywords');
-const progressBar = document.getElementById('progress-bar');
-const averageScoreText = document.getElementById('average-score-text');
+  <!-- Embedded JS: analysis + fallback (single file so no external script loading problems) -->
+  <script>
+  (function(){
+    // Elements
+    const analyzeBtn = document.getElementById('analyze-btn');
+    const clearBtn = document.getElementById('clear-btn');
+    const ttsBtn = document.getElementById('text_to_speech');
+    const feedbackText = document.getElementById('feedback-text');
+    const sentimentResult = document.getElementById('sentiment-result');
+    const sentimentPlaceholder = document.getElementById('sentiment-placeholder');
+    const sentimentEmoji = document.getElementById('sentiment-emoji');
+    const sentimentLabel = document.getElementById('sentiment-label');
+    const sentimentExplanation = document.getElementById('sentiment-explanation');
+    const detectedEmotion = document.getElementById('detected-emotion');
+    const detectedKeywords = document.getElementById('detected-keywords');
+    const progressBar = document.getElementById('progress-bar');
+    const averageScoreText = document.getElementById('average-score-text');
+    const statusMsg = document.getElementById('status-msg');
 
-const radius = progressBar.r.baseVal.value;
-const circumference = 2 * Math.PI * radius;
-progressBar.style.strokeDasharray = `${circumference} ${circumference}`;
-progressBar.style.strokeDashoffset = circumference;
-
-analyzeBtn.addEventListener('click', async () => {
-    const text = feedbackText.value.trim();
-    if(!text) return alert("Please enter feedback.");
-
-    sentimentPlaceholder.classList.add('hidden');
-    sentimentResult.classList.remove('hidden');
-    sentimentEmoji.textContent = '⏳';
-    sentimentLabel.textContent = 'Analyzing...';
-    sentimentExplanation.textContent = 'Processing your feedback...';
-    detectedEmotion.textContent = '';
-    detectedKeywords.innerHTML = '';
-
-    const apiKey = 'inFYaHhTRPXV5m2UuRpRT7-QGZFiDbw9V-L_MBSNg6Qq';
-    const url = 'https://api.au-syd.natural-language-understanding.watson.cloud.ibm.com/instances/9dbe61ce-5257-4702-9aee-d97636b0a7db/v1/analyze?version=2021-08-01';
-
-    try {
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type':'application/json',
-                'Authorization':'Basic '+btoa('apikey:'+apiKey)
-            },
-            body: JSON.stringify({
-                text,
-                features: { sentiment:{}, keywords:{}, emotion:{} }
-            })
-        });
-        const data = await response.json();
-
-        const sentiment = data.sentiment.document.label;
-        const score = data.sentiment.document.score.toFixed(2);
-        let emoji='😐', label='Neutral', explanation='Neutral sentiment indicates balanced feedback.', className='neutral';
-        if(sentiment==='positive'){emoji='😊'; label='Positive'; explanation='This feedback shows a positive sentiment.'; className='positive';}
-        if(sentiment==='negative'){emoji='😞'; label='Negative'; explanation='This feedback shows a negative sentiment.'; className='negative';}
-        sentimentEmoji.textContent = emoji;
-        sentimentLabel.textContent = label;
-        sentimentExplanation.textContent = explanation;
-        sentimentResult.classList.remove('positive','negative','neutral');
-        sentimentResult.classList.add(className);
-
-        if(data.emotion?.document){
-            const emotions = data.emotion.document.emotion;
-            const maxEmotion = Object.keys(emotions).reduce((a,b)=>emotions[a]>emotions[b]?a:b);
-            detectedEmotion.textContent = `Detected Emotion: ${maxEmotion.charAt(0).toUpperCase()+maxEmotion.slice(1)} (${(emotions[maxEmotion]*100).toFixed(0)}%)`;
-        }
-
-        detectedKeywords.innerHTML = '';
-        if(data.keywords && data.keywords.length > 0){
-            data.keywords.forEach(k => {
-                const span = document.createElement('span');
-                span.className = 'keyword-tag ' + (k.relevance > 0.5 ? 'keyword-positive' : 'keyword-negative');
-                span.textContent = k.text;
-                detectedKeywords.appendChild(span);
-            });
-        } else {
-            detectedKeywords.textContent = 'No keywords detected.';
-        }
-
-        const normalizedScore = (parseFloat(score)+1)/2;
-        const offset = circumference - normalizedScore*circumference;
-        progressBar.style.strokeDashoffset = offset;
-        averageScoreText.textContent = score;
-    } catch(e){
-        console.error(e);
-        alert("Error analyzing feedback. Please try again.");
-        sentimentEmoji.textContent = '⚠️';
-        sentimentLabel.textContent = 'Error';
-        sentimentExplanation.textContent = 'Unable to process the feedback at this moment.';
-    }
-});
-
-// Next Page
-nextPageBtn.addEventListener('click', () => {
-    window.location.href = 'text_to_speech.html';
-});
-
-// Clear
-clearBtn.addEventListener('click', ()=> {
-    feedbackText.value = '';
-    sentimentResult.classList.add('hidden');
-    sentimentPlaceholder.classList.remove('hidden');
-    detectedKeywords.innerHTML = '';
-    detectedEmotion.textContent = '';
+    // Prepare progress circle
+    const radius = progressBar.r.baseVal.value;
+    const circumference = 2 * Math.PI * radius;
+    progressBar.style.strokeDasharray = `${circumference} ${circumference}`;
     progressBar.style.strokeDashoffset = circumference;
-    averageScoreText.textContent = '0.00';
-    sentimentResult.classList.remove('positive','negative','neutral');
-});
-</script>
+
+    // IBM Watson NLU credentials (from your previous code).
+    // NOTE: making API calls from a browser can hit CORS restrictions.
+    // If the request fails due to CORS, the fallback analyzer will run.
+    const WATSON_API_KEY = 'inFYaHhTRPXV5m2UuRpRT7-QGZFiDbw9V-L_MBSNg6Qq';
+    const WATSON_URL = 'https://api.au-syd.natural-language-understanding.watson.cloud.ibm.com/instances/9dbe61ce-5257-4702-9aee-d97636b0a7db/v1/analyze?version=2021-08-01';
+
+    analyzeBtn.addEventListener('click', analyzeHandler);
+    clearBtn.addEventListener('click', clearHandler);
+    ttsBtn.addEventListener('click', ()=> window.location.href = 'textToSpeach.html'); // match nav file name
+
+    async function analyzeHandler() {
+      const text = feedbackText.value.trim();
+      if(!text) { alert('Please enter feedback.'); feedbackText.focus(); return; }
+
+      // show loading state
+      sentimentPlaceholder.style.display = 'none';
+      sentimentResult.style.display = 'block';
+      sentimentEmoji.textContent = '⏳';
+      sentimentLabel.textContent = 'Analyzing...';
+      sentimentExplanation.textContent = 'Processing your feedback...';
+      detectedEmotion.textContent = '';
+      detectedKeywords.innerHTML = '';
+      statusMsg.textContent = 'Analyzing — contacting Watson NLU (or using local fallback)...';
+
+      // show small loader inside result-explain until result arrives
+      const loader = document.createElement('div');
+      loader.className = 'loader';
+      sentimentExplanation.parentNode.insertBefore(loader, sentimentExplanation.nextSibling);
+
+      // try remote Watson NLU (may fail due to CORS)
+      try {
+        const payload = {
+          text,
+          features: { sentiment: {}, keywords: {limit:6}, emotion: {} }
+        };
+        const resp = await fetch(WATSON_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Basic ' + btoa('apikey:' + WATSON_API_KEY)
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if(!resp.ok) {
+          // if server responded with error, try fallback
+          throw new Error('Watson NLU responded with HTTP ' + resp.status);
+        }
+
+        const data = await resp.json();
+        loader.remove();
+        statusMsg.textContent = 'Result from Watson NLU.';
+        applyResultFromWatson(data);
+      } catch (err) {
+        // fallback path
+        console.warn('Watson NLU failed or blocked (CORS/Network). Using local fallback. Error:', err);
+        loader.remove();
+        statusMsg.textContent = 'Using local fallback analyzer (remote API failed).';
+        const fallback = simpleLocalAnalyze(text);
+        applyResultFromFallback(fallback);
+      }
+    }
+
+    // map Watson-style result to UI
+    function applyResultFromWatson(data) {
+      try {
+        const sentimentLabelRaw = data?.sentiment?.document?.label || 'neutral';
+        const score = (data?.sentiment?.document?.score != null) ? Number(data.sentiment.document.score) : 0;
+        setSentimentUI(sentimentLabelRaw, score);
+
+        // emotion detection (pick strongest)
+        if(data?.emotion?.document?.emotion) {
+          const emotions = data.emotion.document.emotion;
+          const best = Object.keys(emotions).reduce((a,b)=> emotions[a] > emotions[b] ? a : b);
+          detectedEmotion.textContent = `Detected Emotion: ${capitalize(best)} (${Math.round(emotions[best]*100)}%)`;
+        } else {
+          detectedEmotion.textContent = '';
+        }
+
+        // keywords
+        detectedKeywords.innerHTML = '';
+        if(data?.keywords?.length) {
+          data.keywords.slice(0,6).forEach(k=>{
+            const el = document.createElement('span');
+            el.className='keyword';
+            el.textContent = k.text;
+            detectedKeywords.appendChild(el);
+          });
+        } else {
+          detectedKeywords.textContent = 'No keywords detected.';
+        }
+      } catch(e) {
+        console.error(e);
+        sentimentExplanation.textContent = 'Could not parse analysis results.';
+      }
+    }
+
+    // apply local fallback result (our own object shape)
+    function applyResultFromFallback(obj) {
+      const label = obj.sentiment.label;
+      const score = obj.sentiment.score;
+      setSentimentUI(label, score);
+
+      detectedEmotion.textContent = obj.emotion ? `Detected Emotion: ${capitalize(obj.emotion)} (local)` : '';
+      detectedKeywords.innerHTML = '';
+      if(obj.keywords && obj.keywords.length) {
+        obj.keywords.forEach(k=>{
+          const el = document.createElement('span');
+          el.className='keyword';
+          el.textContent = k;
+          detectedKeywords.appendChild(el);
+        });
+      } else {
+        detectedKeywords.textContent = 'No keywords detected.';
+      }
+    }
+
+    // sets emoji, label, explanation, and progress circle
+    function setSentimentUI(label, score) {
+      const numeric = Number(score) || 0;
+      const normalized = Math.max(-1, Math.min(1, numeric));
+      let emoji='😐', explain='Neutral sentiment indicates balanced feedback.', className='neutral';
+      if(label === 'positive' || normalized > 0.2) { emoji='😊'; explain='This feedback shows a positive sentiment.'; className='positive'; }
+      else if(label === 'negative' || normalized < -0.2) { emoji='😞'; explain='This feedback shows a negative sentiment.'; className='negative'; }
+
+      sentimentEmoji.textContent = emoji;
+      sentimentLabel.textContent = capitalize(label);
+      sentimentExplanation.textContent = explain;
+
+      // stroke dash offset
+      const normalizedScore = (normalized + 1) / 2; // 0..1
+      const offset = circumference - normalizedScore * circumference;
+      progressBar.style.strokeDashoffset = offset;
+      averageScoreText.textContent = numeric.toFixed(2);
+    }
+
+    // CLEAR handler
+    function clearHandler() {
+      feedbackText.value = '';
+      sentimentResult.style.display = 'none';
+      sentimentPlaceholder.style.display = 'block';
+      detectedKeywords.innerHTML = '';
+      detectedEmotion.textContent = '';
+      progressBar.style.strokeDashoffset = circumference;
+      averageScoreText.textContent = '0.00';
+      statusMsg.textContent = 'Your analysis will appear on the right.';
+    }
+
+    // ===== Local fallback sentiment analysis (simple, but reliable for UI) =====
+    function simpleLocalAnalyze(text) {
+      const lower = text.toLowerCase();
+      const words = lower.replace(/[^\w\s]/g,' ').split(/\s+/).filter(Boolean);
+
+      const positive = ["good","great","excellent","amazing","love","loved","like","liked","awesome","fantastic","best","happy","enjoy","enjoyed","nice","pleasant","satisfied","perfect","recommend","support","amazing","brilliant"];
+      const negative = ["bad","terrible","awful","hate","hated","dislike","disliked","worst","boring","disappoint","disappointed","angry","sad","poor","problem","issue","hard","slow","annoy","terrible","mess"];
+      const emotionMap = {
+        joy: ["happy","joy","excited","exciting","joyful","delighted","pleased"],
+        anger: ["angry","angry","mad","furious","hate","annoy","annoyed","rage"],
+        sadness: ["sad","depress","depressed","unhappy","sorrow","lonely","upset"],
+        fear: ["scared","afraid","fear","terrified","nervous","anxious"],
+        surprise: ["surprised","surprise","amazed","shocked"],
+        disgust: ["disgust","disgusted","gross","nasty"]
+      };
+
+      let posCount=0, negCount=0;
+      words.forEach(w=>{
+        if(positive.includes(w)) posCount++;
+        if(negative.includes(w)) negCount++;
+      });
+
+      // compute score between -1 and 1
+      const score = (posCount - negCount) / (Math.sqrt(posCount + negCount + 1));
+      let label = 'neutral';
+      if(score > 0.3) label = 'positive';
+      else if(score < -0.3) label = 'negative';
+
+      // keywords: pick most frequent non-stopword tokens
+      const stop = new Set(["the","and","a","i","it","to","is","in","that","of","for","on","this","with","was","are","but","they","be","have","as","so","not","or"]);
+      const freq = {};
+      words.forEach(w => { if(!stop.has(w) && w.length>2) freq[w] = (freq[w]||0)+1; });
+      const keywords = Object.keys(freq).sort((a,b)=>freq[b]-freq[a]).slice(0,6);
+
+      // simple emotion detection: choose first matched emotion from text
+      let detected = null;
+      for(const [emo, arr] of Object.entries(emotionMap)) {
+        if(arr.some(k => lower.includes(k))) { detected = emo; break; }
+      }
+
+      return {
+        sentiment: { label, score: Number(score.toFixed(2)) },
+        keywords,
+        emotion: detected
+      };
+    }
+
+    // small helper
+    function capitalize(s='') { return s.charAt(0).toUpperCase() + s.slice(1); }
+  })();
+  </script>
 </body>
+<script>
+  function toggleMenu() {
+    document.getElementById("navbar").classList.toggle("active");
+  }
+</script>
 </html>
