@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Movie Bot — Text to Speech</title>
+  <style>
+    /* -- Base/reset styles from TTS theme, but prefixed to avoid clash -- */
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      background: url("https://images.unsplash.com/photo-1617895435390-27e927278a44?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80") no-repeat center center fixed;
+      background-size: cover;
+      z-index: 0;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 1;
+    }
+
+    .tts-container {
+      background-color: rgba(255,255,255,0.95);
+      padding: 40px;
+      border-radius: 15px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+      width: 90%;
+      max-width: 600px;
+      text-align: center;
+      position: relative;
+      z-index: 2;
+    }
+
+    .tts-container h1 {
+      font-size: 2.5em;
+      color: #2c3e50;
+      margin-bottom: 20px;
+    }
+    .tts-container textarea {
+      width: 100%;
+      height: 100px;
+      padding: 15px;
+      font-size: 16px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      resize: none;
+      box-shadow: inset 0 2px 5px rgba(0,0,0,0.05);
+    }
+    .tts-container textarea:focus {
+      outline: none;
+      border-color: #7f5af0;
+      box-shadow: 0 0 8px rgba(127,90,240,0.3);
+    }
+
+    button.tts-speak-button {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 25px;
+      font-size: 16px;
+      font-weight: bold;
+      background-color: #7f5af0;
+      color: #fff;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: background-color 0.3s, transform 0.2s;
+      margin-top: 15px;
+    }
+    button.tts-speak-button:hover {
+      background-color: #5936cf;
+      transform: scale(1.05);
+    }
+    button.tts-speak-button:active {
+      transform: scale(0.97);
+    }
+
+    .tts-status {
+      margin-top: 10px;
+      font-weight: bold;
+      animation: fadeIn 0.5s ease;
+    }
+    .tts-speaking-indicator {
+      display: none;
+      color: #ff6600;
+      font-weight: bold;
+      font-size: 18px;
+      animation: pulse 1s infinite;
+      margin-top: 5px;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 0.3; }
+      50% { opacity: 1; }
+      100% { opacity: 0.3; }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <div class="tts-container">
+    <h1>🔊 Text to Speech</h1>
+    <textarea id="ttsInput" placeholder="Type something to hear..."></textarea>
+    <button class="tts-speak-button" onclick="speakText()">
+      <span class="icon">🎤</span> Speak
+    </button>
+    <div class="tts-status" id="ttsStatus"></div>
+    <div class="tts-speaking-indicator" id="ttsIndicator">🔈 Speaking...</div>
+  </div>
+
+  <script>
+    const TTS_API_KEY = "FQbKkjo43y74cnbzgdvotaEv3z1IYMxjakqqGy4a6L6p";
+    const TTS_URL = "https://api.au-syd.text-to-speech.watson.cloud.ibm.com/instances/67403f15-8dd1-4b81-9a6b-9a75e960d099";
+
+    async function speakText() {
+      const text = document.getElementById("ttsInput").value.trim();
+      const status = document.getElementById("ttsStatus");
+      const indicator = document.getElementById("ttsIndicator");
+      indicator.style.display = "none";
+      status.textContent = "";
+
+      if (!text) {
+        status.style.color = "red";
+        status.textContent = "⚠️ Please enter some text!";
+        return;
+      }
+
+      indicator.style.display = "block";
+
+      try {
+        const resp = await fetch(`${TTS_URL}/v1/synthesize?voice=en-US_AllisonV3Voice`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "audio/mp3",
+            "Authorization": "Basic " + btoa("apikey:" + TTS_API_KEY)
+          },
+          body: JSON.stringify({ text: text })
+        });
+        if (!resp.ok) {
+          throw new Error(await resp.text());
+        }
+        const blob = await resp.blob();
+        const audioUrl = URL.createObjectURL(blob);
+        const audio = new Audio(audioUrl);
+        audio.play();
+        audio.onended = () => {
+          indicator.style.display = "none";
+          status.style.color = "#27ae60";
+          status.textContent = "✅ Speech complete!";
+        };
+      } catch (err) {
+        console.error("TTS error:", err);
+        indicator.style.display = "none";
+        status.style.color = "red";
+        status.textContent = "❌ Error generating speech!";
+      }
+    }
+  </script>
+</body>
+</html>
